@@ -71,10 +71,6 @@ Future<void> _addTodo() async {
   });
   _controller.clear();
 }
-
-Future<void> _deleteTodo(String id) async {
-  await _todosRef.doc(id).delete();
-}
 Future<void> _toggleDone(String id, bool current) async {
   await _todosRef.doc(id).update({'isDone': !current});
 }
@@ -110,6 +106,10 @@ Future<void> _editTodo(String id, String currentTitle) async {
   );
 }
 
+Future<void> _deleteTodo(String id) async {
+  await _todosRef.doc(id).delete();
+}
+
 final CollectionReference _todosRef =
     FirebaseFirestore.instance.collection('todos');
 
@@ -136,7 +136,7 @@ void dispose() {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      title: const Text('Simple To-Do List'),
+      title: const Text('To-Do List'),
       elevation: 2,
     ),
     body: Column(
@@ -144,23 +144,32 @@ Widget build(BuildContext context) {
         Padding(
   padding: const EdgeInsets.all(16.0),
   child: Row(
-    children: [Expanded(
+    children: [
+      Expanded(
         child: TextField(
           controller: _controller,
           decoration: const InputDecoration(
-            hintText: 'Enter a new task',
+            hintText: 'Add a new task...',
             border: OutlineInputBorder(),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           ),
-          onSubmitted: (_) => _addTask(),
+          onSubmitted: (_) => _addTodo(),
         ),
       ),
       const SizedBox(width: 8),
-      IconButton(
-        icon: const Icon(Icons.add_circle, size: 40),
-        color: Colors.blue,
-        onPressed: _addTask,
+      ElevatedButton.icon(
+        onPressed: _addTodo,
+        icon: const Icon(Icons.add),
+        label: const Text('Add'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
       ),
-      Expanded(
+    ],
+  ),
+),
+Expanded(
   child: StreamBuilder<QuerySnapshot>(
     stream: _todosRef
         .orderBy('createdAt', descending: true)
@@ -189,7 +198,6 @@ Widget build(BuildContext context) {
         );
       }
       final docs = snapshot.data!.docs;
-
       return ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: docs.length,
@@ -198,7 +206,7 @@ Widget build(BuildContext context) {
           final doc = docs[index];
           final data = doc.data() as Map<String, dynamic>;
           final isDone = data['isDone'] as bool? ?? false;
-          final title = data['title'] as String? ?? 'No Title';
+          final title = data['title'] as String? ?? '';
           return ListTile(
   contentPadding: const EdgeInsets.symmetric(horizontal: 4),
   leading: Checkbox(
@@ -233,18 +241,6 @@ Widget build(BuildContext context) {
         },
       );
     },
-  ),
-),
-      const SizedBox(width: 8),
-      ElevatedButton.icon(
-        onPressed: _addTodo,
-        icon: const Icon(Icons.add),
-        label: const Text('Add'),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      ),
-    ],
   ),
 ),
 const Divider(height: 1),
